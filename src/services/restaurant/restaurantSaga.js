@@ -8,6 +8,8 @@ import {
   getRestaurantsSucceed,
   addRestaurantFailed,
   addRestaurantSucceed,
+  addRestaurantsSucceed,
+  addRestaurantsFailed,
   deleteRestaurantFailed,
   deleteRestaurantSucceed,
   getRestaurants as getRestaurantsAction,
@@ -21,6 +23,7 @@ import * as restaurantApi from './restaurantApi';
 export function* restaurantSubscriber() {
   yield all([takeEvery('GET_RESTAURANTS', getRestaurants)]);
   yield all([takeEvery('ADD_RESTAURANT', addRestaurant)]);
+  yield all([takeEvery('ADD_RESTAURANTS', addRestaurants)]);
   yield all([takeEvery('DELETE_RESTAURANT', deleteRestaurant)]);
   yield all([takeEvery('UPDATE_RESTAURANT', updateRestaurant)]);
   yield all([takeEvery('GET_RESTAURANT', getRestaurant)]);
@@ -44,6 +47,17 @@ export function* addRestaurant({ payload: { restaurant, params } }) {
   } catch (error) {
     console.error(error);
     yield put(addRestaurantFailed(error));
+  }
+}
+
+export function* addRestaurants({ payload: { data, params } }) {
+  try {
+    yield call(restaurantApi.addRestaurants, data);
+    yield put(addRestaurantsSucceed());
+    yield put(getRestaurantsAction(params));
+  } catch (error) {
+    console.error(error);
+    yield put(addRestaurantsFailed(error));
   }
 }
 

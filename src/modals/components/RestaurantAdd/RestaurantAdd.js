@@ -5,12 +5,13 @@ import queryString from 'query-string';
 import { withRouter } from 'react-router-dom';
 import { Form, FormGroup, Label, Input } from 'reactstrap';
 import Switch from 'react-toggle-switch';
-import { ImageUploader } from 'components';
+import { ImageUploader } from '../../../components';
 import Select from 'react-select';
 import ModalWrapper from '../ModalWrapper';
-import { addRestaurant } from 'services/restaurant/restaurantActions';
-import { getCategories } from 'services/category/categoryActions';
-import { getCities } from 'services/city/cityActions';
+// import { addRestaurant } from 'services/restaurant/restaurantActions';
+import  {addRestaurant} from '../../../services/restaurant/restaurantActions'
+import { getCategories } from '../../../services/category/categoryActions';
+import { getCities } from '../../../services/city/cityActions';
 
 class RestaurantAdd extends React.Component {
   constructor(props) {

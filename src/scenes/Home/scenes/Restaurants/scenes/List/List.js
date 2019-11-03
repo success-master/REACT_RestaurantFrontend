@@ -3,6 +3,9 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { toastr } from 'react-redux-toastr';
 import Swal from 'sweetalert2';
+import CSVParse from 'csv-parse';
+import moment from 'moment';
+
 import {
   Button,
   FormGroup,
@@ -12,26 +15,28 @@ import {
   Card,
   CardImg,
   CardTitle,
+  CardText,
   CardImgOverlay,
   Table
 } from 'reactstrap';
 
 // Import Components
-import { Pagination } from 'components';
+import { Pagination } from '../../../../../../components';
 
 // Import actions
 import {
+  addRestaurants,
   getRestaurants,
   deleteRestaurant
-} from 'services/restaurant/restaurantActions';
-import { showModal } from 'modals/modalConductorActions';
+} from '../../../../../../services/restaurant/restaurantActions';
+import { showModal } from '../../../../../../modals/modalConductorActions';
 
 // Import utility functions
-import { errorMsg, updateSearchQueryInUrl } from 'services/utils';
+import { errorMsg, updateSearchQueryInUrl } from '../../../../../../services/utils';
 import queryString from 'query-string';
 
 // Import settings
-import settings from 'config/settings';
+import settings from '../../../../../../config/settings';
 
 const VIEW_MODE_TILE = 'VIEW_MODE_TILE';
 const VIEW_MODE_TABLE = 'VIEW_MODE_TABLE';
@@ -55,6 +60,10 @@ class List extends React.Component {
     this.onViewModeChange = this.onViewModeChange.bind(this);
     this.onEdit = this.onEdit.bind(this);
     this.onDelete = this.onDelete.bind(this);
+    this.onQRCode = this.onQRCode.bind(this);
+    this.onClickAddRestaurantFromExcel = this.onClickAddRestaurantFromExcel.bind(this);
+    this.onChangeCSVFile = this.onChangeCSVFile.bind(this);
+    this.onExportCSV = this.onExportCSV.bind(this);
   }
 
   componentDidMount() {
@@ -137,6 +146,11 @@ class List extends React.Component {
     });
   }
 
+  onQRCode(id, e){
+    e.stopPropagation();
+    this.props.modalActions.showModal('QRCODE', id);
+  }
+
   onPaginationSelect(selectedPage) {
     let values = queryString.parse(this.props.location.search);
     values = {
@@ -151,24 +165,147 @@ class List extends React.Component {
     });
   }
 
+  onClickAddRestaurantFromExcel() {
+    this.csvUploader.click();
+  }
+
+  onChangeCSVFile(event) {
+    let file = event.target.files[0];
+    if(file === undefined){
+      return;
+    }
+    console.log(file);
+    const filename = file.name;
+    if(filename.substr(filename.length - 4, 4) !== ".csv"){
+      toastr.warning('Warning', "Please select .csv file");
+      return;
+    }
+    const fileReader = new FileReader();
+    const output = [];
+    fileReader.onload = () => {
+      const params = queryString.parse(this.props.location.search);
+      CSVParse(fileReader.result, {})
+        .on('readable', function() {
+          let record;
+          while ((record = this.read())) {
+            let item = {};
+            if(record[6] !== ''){
+              item['created_at'] = moment().format('YYYY-MM-DD HH:mm:ss');
+              item['updated_at'] = moment().format('YYYY-MM-DD HH:mm:ss');
+              item['id'] = record[0];
+              item['name'] = record[1];
+              if(record[2] === ''){
+                item['category'] = [];
+              } else{
+                item['category'] = record[2].split(';');
+              }
+              item['order'] = record[3];
+              item['image_url'] = record[4];
+              item['is_open'] = record[5];
+              item['action'] = record[6];
+              output.push(item);
+              console.log(item);
+            }
+          }
+        })
+        .on('end', () => {
+          if(output[0]['id'] != "Restaurant_Id"){
+            toastr.warning('Warning', "Please select file for Restaurant data");
+            return;
+          } 
+          output.splice(0, 1);
+          console.log(output);
+          if(output.length === 0){
+            toastr.warning('Warning', "No operations in file");
+            return;
+          } else{
+            this.props.restaurantActions.addRestaurants(output, params);
+          }
+        });
+    };
+    fileReader.readAsText(file, "UTF-8");
+  }
+
+  downloadCSV(csv, filename) {
+      var csvFile;
+      var downloadLink;
+      // CSV file
+      csvFile = new Blob(["\ufeff"+csv], {type: "text/csv;charset=UTF-8"});
+      // Download link
+      downloadLink = document.createElement("a");
+      // File name
+      downloadLink.download = filename;
+      // Create a link to the file
+      downloadLink.href = window.URL.createObjectURL(csvFile);
+      // Hide download link
+      downloadLink.style.display = "none";
+      // Add the link to DOM
+      document.body.appendChild(downloadLink);
+      // Click download link
+      downloadLink.click();
+  }
+
+  exportTableToCSV(filename) {
+      var csv = [];
+      var rows = document.querySelectorAll("table tr");
+      for (var i = 0; i < rows.length; i++) {
+          var row = [], cols = rows[i].querySelectorAll("td, th");
+          if(i === 0){
+            row = ['Restaurant_Id', 'Name', 'CategoryIds', 'Order', 'Image Url', 'Opened/Closed', 'Act(i/u/d)'];
+          } else{
+            row.push(cols[0].attributes[1].value); // Restaurant_Id
+            row.push(cols[1].innerText); // Name
+            row.push(cols[2].attributes[0].value); // CategoryIds
+            row.push(cols[4].innerHTML); // Orders
+            if(cols[0].attributes[2]){
+              row.push(cols[0].attributes[2].value); // Image Url
+            } else{
+              row.push("");
+            }
+            if(cols[3].innerText === 'Opened'){
+              row.push('1'); // Opened
+            } else{
+              row.push('0'); // Closed
+            }
+            row.push("");
+          }
+          csv.push(row.join(","));
+      }
+      // Download CSV file
+      this.downloadCSV(csv.join("\n"), filename);
+  }
+
+  onExportCSV(){
+    this.setState({viewMode: VIEW_MODE_TABLE});
+    let self = this;
+    setTimeout(function(){
+      self.exportTableToCSV("Restaurant.csv");
+    }, 500);
+  }
+
   renderRestaurantsTable() {
     if (this.props.restaurants) {
       const { data } = this.props.restaurants;
-
+      console.log(data);
       if (data && data.length > 0) {
         const restaurantTableRows = data.map((restaurant, index) => {
           let categoryNameArray = [];
+          let categoryIdArray = [];
           if (restaurant.categories) {
             categoryNameArray = restaurant.categories.map(item => {
               return item.name;
             });
+            categoryIdArray = restaurant.categories.map(item => {
+              return item.id;
+            });
           }
 
           const categories = categoryNameArray.join(', ');
+          const categoryIds = categoryIdArray.join(';');
 
           return (
             <tr key={restaurant.id}>
-              <th scope="row"> {index + 1} </th>
+              <th scope="row" data_id={restaurant.id} data_image_url={restaurant.image_url}> {index + 1} </th>
               <th>
                 {/* eslint-disable-next-line  */}
                 <a
@@ -180,7 +317,7 @@ class List extends React.Component {
                   {restaurant.name}
                 </a>
               </th>
-              <th>{categories} </th>
+              <th data_category_ids={categoryIds}>{categories} </th>
               <th>{restaurant.is_open ? 'Opened' : 'Closed'}</th>
               <th>{restaurant.order}</th>
               <th>
@@ -199,6 +336,14 @@ class List extends React.Component {
                   }}
                 >
                   <i className="fa fa-trash" />
+                </Button>
+                <Button
+                  color="primary"
+                  onClick={e => {
+                    this.onQRCode(restaurant.id, e);
+                  }}
+                >
+                  <i className="fa fa-qrcode" />
                 </Button>
               </th>
             </tr>
@@ -240,7 +385,7 @@ class List extends React.Component {
           return (
             <div
               key={index}
-              className="col-sm-3 col-xs-12 mb-3 d-flex align-items-stretch"
+              className="col-lg-3 col-md-6 col-xs-12 mb-3 d-flex align-items-stretch"
               onClick={() => {
                 //this.props.history.push(`/menus?restaurant=${restaurant.id}`);
                 window.location.href = `/menus?restaurant=${restaurant.id}`;
@@ -250,7 +395,8 @@ class List extends React.Component {
                 <CardImg
                   top
                   width="100%"
-                  className="h-100"
+                  height="280px"
+                  className=""
                   src={settings.BASE_URL + restaurant.image_url}
                   alt={restaurant.name}
                 />
@@ -259,6 +405,9 @@ class List extends React.Component {
                   <CardTitle className="tile-view-card-title">
                     {restaurant.name + closedSz}
                   </CardTitle>
+                  <CardText className="tile-view-card-id"> 
+                    {restaurant.id} 
+                  </CardText>
                   <div className="card-buttons-hover-show">
                     <Button
                       size="sm"
@@ -277,6 +426,15 @@ class List extends React.Component {
                       }}
                     >
                       <i className="fa fa-trash" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      color="primary"
+                      onClick={e => {
+                        this.onQRCode(restaurant.id, e);
+                      }}
+                    >
+                      <i className="fa fa-qrcode" />
                     </Button>
                   </div>
                 </CardImgOverlay>
@@ -320,6 +478,27 @@ class List extends React.Component {
           Open filter&nbsp;
           <i className="fa fa-filter" />
         </Button>
+        <input
+          type="file"
+          style={{ display: 'none' }}
+          onChange={this.onChangeCSVFile}
+          onClick={(e) => e.target.value = null}
+          ref={ref => {
+            this.csvUploader = ref;
+          }}
+        />
+        <Button color="default" onClick={this.onClickAddRestaurantFromExcel}>
+          <i className="fa fa-file-excel-o" />
+          &nbsp;Add from CSV
+        </Button>
+        <Button 
+          color="default" 
+          onClick={this.onExportCSV}
+        >
+          <i className="fa fa-file-excel-o" />
+          &nbsp;Export csv
+        </Button>
+        &nbsp;&nbsp;&nbsp;&nbsp;
         <Button onClick={() => this.onViewModeChange(VIEW_MODE_TILE)}>
           <i className="fa fa-th" />
         </Button>
@@ -393,6 +572,7 @@ export default connect(
   dispatch => ({
     restaurantActions: bindActionCreators(
       {
+        addRestaurants,
         getRestaurants,
         deleteRestaurant
       },

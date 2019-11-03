@@ -13,6 +13,9 @@ import {
   updateCategory,
   updateCategoryFailed,
   updateCategorySucceed,
+  addCategories,
+  addCategoriesSucceed,
+  addCategoriesFailed,
   getCategory,
   getCategoryFailed,
   getCategorySucceed,
@@ -126,6 +129,35 @@ const reducer = handleActions({
       success: false,
       error
     }
+  },
+  [addCategories](state) {
+    return {
+      ...state,
+      loading: true,
+      success: false,
+      message: 'Adding Categories...'
+    };
+  },
+  [addCategoriesSucceed](state) {
+    return {
+      ...state,
+      loading: false,
+      success: true,
+      message: 'Categories updated successfully'
+    };
+  },
+  [addCategoriesFailed](
+    state,
+    {
+      payload: { error }
+    }
+  ) {
+    return {
+      ...state,
+      loading: false,
+      error,
+      success: false
+    };
   },
   [getCategory](state) {
     return {

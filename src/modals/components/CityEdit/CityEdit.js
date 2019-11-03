@@ -5,13 +5,13 @@ import queryString from 'query-string';
 import { withRouter } from 'react-router-dom';
 import { Form, FormGroup, Label, Input } from 'reactstrap';
 import Switch from 'react-toggle-switch';
-import { ImageUploader } from 'components';
-import settings from 'config/settings';
+import { ImageUploader } from '../../../components';
+import settings from '../../../config/settings';
 
 import ModalWrapper from '../ModalWrapper';
 
 // Import Actions
-import { updateCity } from 'services/city/cityActions';
+import { updateCity } from '../../../services/city/cityActions';
 
 class CityEdit extends React.Component {
   constructor(props) {

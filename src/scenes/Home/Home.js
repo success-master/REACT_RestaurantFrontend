@@ -15,7 +15,7 @@ import MenuItems from './scenes/MenuItems';
 import Restaurants from './scenes/Restaurants';
 
 // selectors
-import { getCurrentUser } from 'services/auth/select';
+import { getCurrentUser } from '../../services/auth/select';
 
 /** Import assets */
 import './home.css';

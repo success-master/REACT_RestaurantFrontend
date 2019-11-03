@@ -10,12 +10,12 @@ import store, { history } from './store';
 import App from './scenes/App';
 
 // Import assets
-import './assets/fonts/font-awesome/css/font-awesome.css';
+import './assets/fonts/font-awesome/scss/font-awesome.css';
 import 'aos/dist/aos.css';
 import 'react-redux-toastr/lib/css/react-redux-toastr.min.css';
 import 'react-toggle-switch/dist/css/switch.min.css';
-import 'assets/scss/restaurant_admin.css';
-import 'global.css';
+import './assets/scss/restaurant_admin.css';
+import './global.css';
 
 // Import register service worker
 import registerServiceWorker from './registerServiceWorker';

@@ -4,8 +4,8 @@ import { bindActionCreators } from 'redux';
 import { toastr } from 'react-redux-toastr';
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import CSVParse from 'csv-parse';
 import { withRouter } from 'react-router-dom';
+import CSVParse from 'csv-parse';
 import moment from 'moment';
 
 import {
@@ -17,23 +17,24 @@ import {
   Card,
   CardImg,
   CardTitle,
+  CardText,
   CardImgOverlay,
   Table
 } from 'reactstrap';
 import queryString from 'query-string';
-import { csv2array } from 'services/utils';
+import { csv2array } from '../../../../../../services/utils';
 // Import Components
-import { Pagination } from 'components';
+import { Pagination } from '../../../../../../components';
 
 // Import actions
-import { getCities, deleteCity, addCities } from 'services/city/cityActions';
-import { showModal } from 'modals/modalConductorActions';
+import { getCities, deleteCity, addCities } from '../../../../../../services/city/cityActions';
+import { showModal } from '../../../../../../modals/modalConductorActions';
 
 // Import Utility functions
-import { errorMsg, updateSearchQueryInUrl } from 'services/utils';
+import { errorMsg, updateSearchQueryInUrl } from '../../../../../../services/utils';
 
 // Import settings
-import settings from 'config/settings';
+import settings from '../../../../../../config/settings';
 
 const VIEW_MODE_TILE = 'VIEW_MODE_TILE';
 const VIEW_MODE_TABLE = 'VIEW_MODE_TABLE';
@@ -62,6 +63,7 @@ class List extends React.Component {
     this.onEdit = this.onEdit.bind(this);
     this.onClickAddCityFromExcel = this.onClickAddCityFromExcel.bind(this);
     this.onChangeCSVFile = this.onChangeCSVFile.bind(this);
+    this.onExportCSV = this.onExportCSV.bind(this);
   }
 
   componentDidMount() {
@@ -132,44 +134,6 @@ class List extends React.Component {
     });
   }
 
-  onClickAddCityFromExcel() {
-    this.csvUploader.click();
-  }
-
-  onChangeCSVFile(event) {
-    let file = event.target.files[0];
-
-    console.log(file);
-    const fileReader = new FileReader();
-    const output = [];
-    fileReader.onload = () => {
-      const params = queryString.parse(this.props.location.search);
-
-      CSVParse(fileReader.result, {})
-        .on('readable', function() {
-          let record;
-          while ((record = this.read())) {
-            let item = {};
-            item['created_at'] = moment().format('YYYY-MM-DD HH:mm:ss');
-            item['updated_at'] = moment().format('YYYY-MM-DD HH:mm:ss');
-            item['name'] = record[0];
-            item['order'] = record[1];
-            item['image_url'] = record[2];
-            item['is_open'] = record[3];
-            output.push(item);
-          }
-        })
-        .on('end', () => {
-          console.log('output array here');
-          output.splice(0, 1);
-          console.log(output);
-
-          this.props.cityActions.addCities(output, params);
-        });
-    };
-    fileReader.readAsBinaryString(file);
-  }
-
   onEdit(city, e) {
     e.stopPropagation();
     this.props.modalActions.showModal('EDIT_CITY_MODAL', city);
@@ -193,14 +157,125 @@ class List extends React.Component {
     });
   }
 
+  onClickAddCityFromExcel() {
+    this.csvUploader.click();
+  }
+
+  onChangeCSVFile(event) {
+    let file = event.target.files[0];
+    if(file === undefined){
+      return;
+    }
+    console.log(file);
+    const filename = file.name;
+    if(filename.substr(filename.length - 4, 4) !== ".csv"){
+      toastr.warning('Warning', "Please select .csv file");
+      return;
+    }
+    const fileReader = new FileReader();
+    const output = [];
+    fileReader.onload = () => {
+      const params = queryString.parse(this.props.location.search);
+      CSVParse(fileReader.result, {})
+        .on('readable', function() {
+          let record;
+          while ((record = this.read())) {
+            let item = {};
+            if(record[5] !== ''){
+              item['created_at'] = moment().format('YYYY-MM-DD HH:mm:ss');
+              item['updated_at'] = moment().format('YYYY-MM-DD HH:mm:ss');
+              item['id'] = record[0];
+              item['name'] = record[1];
+              item['order'] = record[2];
+              item['image_url'] = record[3];
+              item['is_open'] = record[4];
+              item['action'] = record[5];
+              output.push(item);
+            }
+          }
+        })
+        .on('end', () => {
+          console.log(output[0])
+          if(output[0]['id'] != "City_Id"){
+            toastr.warning('Warning', "Please select file for City data");
+            return;
+          }
+          output.splice(0, 1);
+          console.log(output);
+          if(output.length === 0){
+            toastr.warning('Warning', "No operations in file");
+            return;
+          } else{
+            this.props.cityActions.addCities(output, params);
+          }
+        });
+    };
+    fileReader.readAsText(file, "UTF-8");
+  }
+
+  downloadCSV(csv, filename) {
+      var csvFile;
+      var downloadLink;
+      // CSV file
+      csvFile = new Blob(["\ufeff"+csv], {type: "text/csv;charset=UTF-8"});
+      // Download link
+      downloadLink = document.createElement("a");
+      // File name
+      downloadLink.download = filename;
+      // Create a link to the file
+      downloadLink.href = window.URL.createObjectURL(csvFile);
+      // Hide download link
+      downloadLink.style.display = "none";
+      // Add the link to DOM
+      document.body.appendChild(downloadLink);
+      // Click download link
+      downloadLink.click();
+  }
+
+  exportTableToCSV(filename) {
+      var csv = [];
+      var rows = document.querySelectorAll("table tr");
+      for (var i = 0; i < rows.length; i++) {
+          var row = [], cols = rows[i].querySelectorAll("td, th");
+          if(i === 0){
+            row = ['City_Id', 'Name', 'Order', 'Image Url', 'Opened/Closed', 'Act(i/u/d)'];
+          } else{
+            row.push(cols[0].attributes[1].value);
+            row.push(cols[1].innerText);
+            row.push(cols[3].innerText);
+            if(cols[0].attributes[2]){
+              row.push(cols[0].attributes[2].value); // Image Url
+            } else{
+              row.push("");
+            }
+            if(cols[2].innerText === 'Opened'){
+              row.push('1');
+            } else{
+              row.push('0');
+            }
+            row.push("");
+          }
+          csv.push(row.join(","));
+      }
+      // Download CSV file
+      this.downloadCSV(csv.join("\n"), filename);
+  }
+
+  onExportCSV(){
+    this.setState({viewMode: VIEW_MODE_TABLE});
+    let self = this;
+    setTimeout(function(){
+      self.exportTableToCSV("City.csv");
+    }, 500);
+  }
+
   renderCitiesTable() {
     if (this.props.cities) {
       const { data } = this.props.cities;
-
       if (data && data.length > 0) {
         const cityTableRows = data.map((city, index) => (
           <tr key={city.id}>
-            <th scope="row"> {index + 1} </th>
+            <th scope="row" data_id={city.id} data_image={city.image_url}> {index + 1} </th>
             <th>
               <Link
                 to={{
@@ -268,13 +343,16 @@ class List extends React.Component {
           }
 
           let image_url = city.image_url;
-          if (image_url.substring(0, 4) !== 'http') {
+          if (city.image_url === null){
+            image_url = "https://loremflickr.com/g/320/240/paris";
+          }
+          if (city.image_url !== null && city.image_url.substring(0, 4) !== 'http') {
             image_url = settings.BASE_URL + image_url;
           }
           return (
             <div
               key={index}
-              className="col-sm-3 col-xs-12 mb-3 d-flex align-items-stretch"
+              className="col-lg-3 col-md-6 col-xs-12 mb-3 d-flex align-items-stretch"
               onClick={() => {
                 this.props.history.push(`/restaurants?city=${city.id}`);
               }}
@@ -283,7 +361,8 @@ class List extends React.Component {
                 <CardImg
                   top
                   width="100%"
-                  className="h-100 city-image-tile"
+                  height="280px"
+                  className="city-image-tile"
                   src={image_url}
                   alt={city.name}
                 />
@@ -292,6 +371,9 @@ class List extends React.Component {
                   <CardTitle className="tile-view-card-title">
                     {city.name + closedSz}
                   </CardTitle>
+                  <CardText className="tile-view-card-id"> 
+                    {city.id} 
+                  </CardText>
                   <div className="card-buttons-hover-show">
                     <Button
                       size="sm"
@@ -354,22 +436,32 @@ class List extends React.Component {
           <i className="fa fa-plus" />
           &nbsp;Add city
         </Button>
+        
+        <Button id="toggle_city" color="warning">
+          Open filter&nbsp;
+          <i className="fa fa-filter" />
+        </Button>
         <input
           type="file"
           style={{ display: 'none' }}
           onChange={this.onChangeCSVFile}
+          onClick={(e) => e.target.value = null}
           ref={ref => {
             this.csvUploader = ref;
           }}
         />
         <Button color="default" onClick={this.onClickAddCityFromExcel}>
           <i className="fa fa-file-excel-o" />
-          &nbsp;Add city from CSV
+          &nbsp;Add from CSV
         </Button>
-        <Button id="toggle_city" color="warning">
-          Open filter&nbsp;
-          <i className="fa fa-filter" />
+        <Button 
+          color="default" 
+          onClick={this.onExportCSV}
+        >
+          <i className="fa fa-file-excel-o" />
+          &nbsp;Export csv
         </Button>
+        &nbsp;&nbsp;&nbsp;&nbsp;
         <Button onClick={() => this.onViewModeChange(VIEW_MODE_TILE)}>
           <i className="fa fa-th" />
         </Button>

@@ -5,6 +5,8 @@ import { toastr } from 'react-redux-toastr';
 import Swal from 'sweetalert2';
 import queryString from 'query-string';
 import { Link } from 'react-router-dom';
+import CSVParse from 'csv-parse';
+import moment from 'moment';
 import {
   Button,
   FormGroup,
@@ -14,26 +16,28 @@ import {
   Card,
   CardImg,
   CardTitle,
+  CardText,
   CardImgOverlay,
   Table,
   CardSubtitle
 } from 'reactstrap';
 
 // Import Components
-import { Pagination } from 'components';
+import { Pagination } from '../../../../../../components';
 
 // Import actions
 import {
   getCategories,
+  addCategories,
   deleteCategory
-} from 'services/category/categoryActions';
-import { showModal } from 'modals/modalConductorActions';
+} from '../../../../../../services/category/categoryActions';
+import { showModal } from '../../../../../../modals/modalConductorActions';
 
 // Import Utility functions
-import { errorMsg, updateSearchQueryInUrl } from 'services/utils';
+import { errorMsg, updateSearchQueryInUrl } from '../../../../../../services/utils';
 
 // Import settings
-import settings from 'config/settings';
+import settings from '../../../../../../config/settings';
 
 const VIEW_MODE_TILE = 'VIEW_MODE_TILE';
 const VIEW_MODE_TABLE = 'VIEW_MODE_TABLE';
@@ -60,6 +64,9 @@ class List extends React.Component {
     this.onViewModeChange = this.handleViewModeChange.bind(this);
     this.onEdit = this.onEdit.bind(this);
     this.onDelete = this.handleDelete.bind(this);
+    this.onClickAddCategoryFromExcel = this.onClickAddCategoryFromExcel.bind(this);
+    this.onChangeCSVFile = this.onChangeCSVFile.bind(this);
+    this.onExportCityCSV = this.onExportCityCSV.bind(this);
   }
 
   componentDidMount() {
@@ -157,6 +164,119 @@ class List extends React.Component {
     });
   }
 
+  onClickAddCategoryFromExcel() {
+    this.csvUploader.click();
+  }
+
+  onChangeCSVFile(event) {
+    let file = event.target.files[0];
+    if(file === undefined){
+      return;
+    }
+    console.log(file);
+    const filename = file.name;
+    if(filename.substr(filename.length - 4, 4) !== ".csv"){
+      toastr.warning('Warning', "Please select .csv file");
+      return;
+    }
+    const fileReader = new FileReader();
+    const output = [];
+    fileReader.onload = () => {
+      const params = queryString.parse(this.props.location.search);
+      CSVParse(fileReader.result, {})
+        .on('readable', function() {
+          let record;
+          while ((record = this.read())) {
+            let item = {};
+            if(record[6] !== ''){
+              item['created_at'] = moment().format('YYYY-MM-DD HH:mm:ss');
+              item['updated_at'] = moment().format('YYYY-MM-DD HH:mm:ss');
+              item['id'] = record[0];
+              item['name'] = record[1];
+              item['city_id'] = record[2];
+              item['order'] = record[3];
+              item['image_url'] = record[4];
+              item['is_open'] = record[5];
+              item['action'] = record[6];
+              output.push(item);
+            }
+          }
+        })
+        .on('end', () => {
+          if(output[0]['id'] != "Category_Id"){
+            toastr.warning('Warning', "Please select file for Category data");
+            return;
+          }          
+          output.splice(0, 1);
+          console.log(output);
+          if(output.length === 0){
+            toastr.warning('Warning', "No operations in file");
+            return;
+          } else{
+            this.props.categoryActions.addCategories(output, params);
+          }
+        });
+    };
+    fileReader.readAsText(file, "UTF-8");
+  }
+
+  downloadCSV(csv, filename) {
+      var csvFile;
+      var downloadLink;
+      // CSV file
+      csvFile = new Blob(["\ufeff"+csv], {type: "text/csv;charset=UTF-8"});
+      // Download link
+      downloadLink = document.createElement("a");
+      // File name
+      downloadLink.download = filename;
+      // Create a link to the file
+      downloadLink.href = window.URL.createObjectURL(csvFile);
+      // Hide download link
+      downloadLink.style.display = "none";
+      // Add the link to DOM
+      document.body.appendChild(downloadLink);
+      // Click download link
+      downloadLink.click();
+  }
+
+  exportTableToCSV(filename) {
+      var csv = [];
+      var rows = document.querySelectorAll("table tr");
+      for (var i = 0; i < rows.length; i++) {
+          var row = [], cols = rows[i].querySelectorAll("td, th");
+          if(i === 0){
+            row = ['Category_Id', 'Name', 'City_Id', 'Order', 'Image Url', 'Opened/Closed', 'Act(i/u/d)'];
+          } else{
+            row.push(cols[0].attributes[1].value); // Category_Id
+            row.push(cols[1].innerText); // Category Name
+            row.push(cols[2].attributes[0].value); // City_Id
+            row.push(cols[4].innerText); // Order
+            if(cols[0].attributes[2]){
+              row.push(cols[0].attributes[2].value); // Image Url
+            } else{
+              row.push("");
+            }
+            if(cols[3].innerText === 'Opened'){
+              row.push('1'); // Opened
+            } else{
+              row.push('0'); // Closed
+            }
+            row.push("");
+          }
+          csv.push(row.join(","));
+      }
+      // Download CSV file
+      this.downloadCSV(csv.join("\n"), filename);
+  }
+
+  onExportCityCSV(){
+    this.setState({viewMode: VIEW_MODE_TABLE});
+    let self = this;
+    setTimeout(function(){
+      self.exportTableToCSV("Category.csv");
+    }, 500);
+  }
+
   renderCategoriesTable() {
     if (this.props.categories) {
       const { data } = this.props.categories;
@@ -164,7 +284,7 @@ class List extends React.Component {
       if (data && data.length > 0) {
         const categoryTableRows = data.map((category, index) => (
           <tr key={category.id}>
-            <th scope="row"> {index + 1} </th>
+            <th scope="row" data_id={category.id} data_image={category.image_url}> {index + 1} </th>
             <th>
               <Link
                 to={{
@@ -175,7 +295,7 @@ class List extends React.Component {
                 {category.name}
               </Link>
             </th>
-            <th>{category.city.name}</th>
+            <th data_city_id={category.city.id}>{category.city.name}</th>
             <th>{category.is_open ? 'Opened' : 'Closed'}</th>
             <th>{category.order}</th>
             <th>
@@ -233,7 +353,7 @@ class List extends React.Component {
           return (
             <div
               key={index}
-              className="col-sm-3 col-xs-12 mb-3 d-flex align-items-stretch"
+              className="col-lg-3 col-md-6 col-xs-12 mb-3 d-flex align-items-stretch"
               onClick={() => {
                 this.props.history.push(`/restaurants?category=${category.id}`);
               }}
@@ -242,7 +362,8 @@ class List extends React.Component {
                 <CardImg
                   top
                   width="100%"
-                  className="h-100"
+                  height="280px"
+                  className=""
                   src={settings.BASE_URL + category.image_url}
                   alt={category.name}
                 />
@@ -254,6 +375,9 @@ class List extends React.Component {
                   <CardSubtitle className="text-white">
                     {category.city ? category.city.name : 'N/A'}
                   </CardSubtitle>
+                  <CardText className="tile-view-card-id"> 
+                    {category.id} 
+                  </CardText>
                   <div className="card-buttons-hover-show">
                     <Button
                       size="sm"
@@ -314,6 +438,26 @@ class List extends React.Component {
         <Button id="toggle_category" color="warning">
           Open filter&nbsp;
           <i className="fa fa-filter" />
+        </Button>
+        <input
+          type="file"
+          style={{ display: 'none' }}
+          onChange={this.onChangeCSVFile}
+          onClick={(e) => e.target.value = null}
+          ref={ref => {
+            this.csvUploader = ref;
+          }}
+        />
+        <Button color="default" onClick={this.onClickAddCategoryFromExcel}>
+          <i className="fa fa-file-excel-o" />
+          &nbsp;Add from CSV
+        </Button>
+        <Button 
+          color="default" 
+          onClick={this.onExportCityCSV} 
+        >
+          <i className="fa fa-file-excel-o" />
+          &nbsp;Export csv
         </Button>
         <Button onClick={() => this.handleViewModeChange(VIEW_MODE_TILE)}>
           <i className="fa fa-th" />
@@ -399,7 +543,7 @@ export default connect(
   }),
   dispatch => ({
     categoryActions: bindActionCreators(
-      { getCategories, deleteCategory },
+      { addCategories, getCategories, deleteCategory },
       dispatch
     ),
     modalActions: bindActionCreators({ showModal }, dispatch)

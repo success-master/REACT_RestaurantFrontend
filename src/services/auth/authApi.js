@@ -1,5 +1,5 @@
 import { wrapRequest, xapi } from '../utils';
-import { oAuth2 } from 'config/settings';
+import { oAuth2 } from '../../config/settings';
 
 const login = wrapRequest(async (username, password) =>
   xapi().post('/oauth/token', {

@@ -5,9 +5,9 @@ import queryString from 'query-string';
 import { withRouter } from 'react-router-dom';
 import { Form, FormGroup, Label, Input } from 'reactstrap';
 import ModalWrapper from '../ModalWrapper';
-import { addMenu } from 'services/menu/menuActions';
-import { getRestaurants } from 'services/restaurant/restaurantActions';
-import { getCategories } from 'services/category/categoryActions';
+import { addMenu } from '../../../services/menu/menuActions';
+import { getRestaurants } from '../../../services/restaurant/restaurantActions';
+import { getCategories } from '../../../services/category/categoryActions';
 
 class MenuAdd extends React.Component {
   constructor(props) {

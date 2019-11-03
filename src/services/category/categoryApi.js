@@ -17,6 +17,10 @@ const addCategory = wrapRequest(async category => {
   });
 });
 
+const addCategories = wrapRequest(async data =>
+  xapi().post('/api/categories/insertmany', { data })
+);
+
 const deleteCategory = wrapRequest(async id =>
   xapi().delete(`/api/categories/${id}`)
 );
@@ -40,6 +44,7 @@ const getCategory = wrapRequest(async id =>
 export {
   getCategories,
   addCategory,
+  addCategories,
   deleteCategory,
   updateCategory,
   getCategory

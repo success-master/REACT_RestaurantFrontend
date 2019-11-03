@@ -7,13 +7,19 @@ import {
   getItemSucceed,
   addItemFailed,
   addItemSucceed,
+  addItem1Failed,
+  addItem1Succeed,
   deleteItemFailed,
   deleteItemSucceed,
+  deleteItem1Failed,
+  deleteItem1Succeed,
   getItems as getItemsAction,
   updateItemFailed,
   updateItemSucceed,
   addItemsFailed,
-  addItemsSucceed
+  addItemsSucceed,
+  addItems1Failed,
+  addItems1Succeed
 } from './itemActions';
 
 // Import API
@@ -23,10 +29,13 @@ import { getMenus } from '../menu/menuActions';
 export function* itemSubscriber() {
   yield all([takeEvery('GET_ITEMS', getItems)]);
   yield all([takeEvery('ADD_ITEM', addItem)]);
+  yield all([takeEvery('ADD_ITEM_1', addItem1)]);
   yield all([takeEvery('DELETE_ITEM', deleteItem)]);
+  yield all([takeEvery('DELETE_ITEM_1', deleteItem1)]);
   yield all([takeEvery('UPDATE_ITEM', updateItem)]);
   yield all([takeEvery('GET_ITEM', getItem)]);
   yield all([takeEvery('ADD_ITEMS', addItems)]);
+  yield all([takeEvery('ADD_ITEMS_1', addItems1)]);
 }
 
 export function* getItems({ payload: { params } }) {
@@ -47,6 +56,18 @@ export function* addItem({ payload: { item, params } }) {
   } catch (error) {
     console.error(error);
     yield put(addItemFailed(error));
+  }
+}
+
+export function* addItem1({ payload: { item, params } }) {
+  
+  try {
+    yield call(itemApi.addItem, item);
+    yield put(addItem1Succeed());
+    yield put(getItemsAction(params));
+  } catch (error) {
+    console.error(error);
+    yield put(addItem1Failed(error));
   }
 }
 
@@ -72,15 +93,37 @@ export function* addItems({ payload: { items, params } }) {
   }
 }
 
+export function* addItems1({ payload: { data, params } }) {
+  try {
+    console.log('djdjdjd');
+    yield call(itemApi.addItems1, data);
+    yield put(addItems1Succeed());
+    yield put(getItemsAction(params));
+  } catch (error) {
+    console.error(error);
+    yield put(addItems1Failed(error));
+  }
+}
+
 export function* deleteItem({ payload: { id, params } }) {
   try {
     yield call(itemApi.deleteItem, id);
     yield put(deleteItemSucceed());
-    yield put(getItemsAction({ page: 1 }));
     yield put(getMenus(params));
   } catch (error) {
     console.error(error);
     yield put(deleteItemFailed(error));
+  }
+}
+
+export function* deleteItem1({ payload: { id, params } }) {
+  try {
+    yield call(itemApi.deleteItem, id);
+    yield put(deleteItem1Succeed());
+    yield put(getItemsAction(params));
+  } catch (error) {
+    console.error(error);
+    yield put(deleteItem1Failed(error));
   }
 }
 

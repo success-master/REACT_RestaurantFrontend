@@ -9,6 +9,8 @@ import CategoryEdit from './components/CategoryEdit';
 import RestaurantAdd from './components/RestaurantAdd';
 import RestaurantEdit from './components/RestaurantEdit';
 import MenuAdd from './components/MenuAdd';
+import ItemAdd from './components/ItemAdd';
+import QRCode from './components/QRCode';
 
 const ModalConductor = props => {
   switch (props.modal.modalType) {
@@ -26,6 +28,10 @@ const ModalConductor = props => {
       return <RestaurantEdit {...props} />;
     case 'MENU_ADD_MODAL':
       return <MenuAdd {...props} />;
+    case 'ITEM_ADD_MODAL':
+      return <ItemAdd {...props} />;
+    case 'QRCODE':
+      return <QRCode {...props} />;
     default:
       return null;
   }

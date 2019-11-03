@@ -11,11 +11,11 @@ import {
   Input,
   Button
 } from 'reactstrap';
-import { ImageUploader } from 'components';
+import { ImageUploader } from '../../../../../../../../components';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { withRouter } from 'react-router-dom';
-import { updateMenu } from 'services/menu/menuActions';
+import { updateMenu } from '../../../../../../../../services/menu/menuActions';
 import queryString from 'query-string';
 
 class MenuEditModal extends React.Component {

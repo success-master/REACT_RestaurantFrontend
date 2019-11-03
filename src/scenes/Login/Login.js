@@ -8,7 +8,7 @@ import { Redirect } from 'react-router-dom';
 import LoginForm from './components/LoginForm/LoginForm';
 
 // Import utility functiosn
-import { errorMsg } from 'services/utils';
+import { errorMsg } from '../../services/utils';
 
 // Import Assets
 import './login.css';

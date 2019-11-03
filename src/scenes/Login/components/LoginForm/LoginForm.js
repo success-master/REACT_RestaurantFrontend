@@ -7,7 +7,7 @@ import { toastr } from 'react-redux-toastr';
 import { Button, Input, FormGroup, Label } from 'reactstrap';
 
 // Import actions
-import { login } from 'services/auth/authActions';
+import { login } from '../../../../services/auth/authActions';
 import { bindActionCreators } from 'redux';
 
 // Import assets

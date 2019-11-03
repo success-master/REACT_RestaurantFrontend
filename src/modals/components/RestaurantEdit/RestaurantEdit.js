@@ -6,13 +6,13 @@ import { withRouter } from 'react-router-dom';
 import { Form, FormGroup, Label, Input } from 'reactstrap';
 import Switch from 'react-toggle-switch';
 import Select from 'react-select';
-import { ImageUploader } from 'components';
-import settings from 'config/settings';
+import { ImageUploader } from '../../../components';
+import settings from '../../../config/settings';
 import ModalWrapper from '../ModalWrapper';
 
 // Import Actions
-import { updateRestaurant } from 'services/restaurant/restaurantActions';
-import { getCategories } from 'services/category/categoryActions';
+import { updateRestaurant } from '../../../services/restaurant/restaurantActions';
+import { getCategories } from '../../../services/category/categoryActions';
 
 class RestaurantEdit extends React.Component {
   constructor(props) {

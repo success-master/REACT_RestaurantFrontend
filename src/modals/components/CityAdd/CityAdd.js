@@ -5,9 +5,9 @@ import queryString from 'query-string';
 import { withRouter } from 'react-router-dom';
 import { Form, FormGroup, Label, Input } from 'reactstrap';
 import Switch from 'react-toggle-switch';
-import { ImageUploader } from 'components';
+import { ImageUploader } from '../../../components';
 import ModalWrapper from '../ModalWrapper';
-import { addCity } from 'services/city/cityActions';
+import { addCity } from '../../../services/city/cityActions';
 
 class CityAdd extends React.Component {
   constructor(props) {

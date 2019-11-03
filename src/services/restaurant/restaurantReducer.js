@@ -13,6 +13,9 @@ import {
   addRestaurant,
   addRestaurantSucceed,
   addRestaurantFailed,
+  addRestaurants,
+  addRestaurantsSucceed,
+  addRestaurantsFailed,
   getRestaurant,
   getRestaurantSucceed,
   updateCurrentRestaurant
@@ -89,6 +92,35 @@ const reducer = handleActions(
         loading: false,
         success: false,
         error
+      };
+    },
+    [addRestaurants](state) {
+      return {
+        ...state,
+        loading: true,
+        success: false,
+        message: 'Adding Restaurants...'
+      };
+    },
+    [addRestaurantsSucceed](state) {
+      return {
+        ...state,
+        loading: false,
+        success: true,
+        message: 'Restaurants updated successfully'
+      };
+    },
+    [addRestaurantsFailed](
+      state,
+      {
+        payload: { error }
+      }
+    ) {
+      return {
+        ...state,
+        loading: false,
+        error,
+        success: false
       };
     },
     [deleteRestaurant](

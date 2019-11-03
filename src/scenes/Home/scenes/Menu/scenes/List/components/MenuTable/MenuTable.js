@@ -4,23 +4,27 @@ import { bindActionCreators } from 'redux';
 import { Table, Button, UncontrolledCollapse, Input } from 'reactstrap';
 import Swal from 'sweetalert2';
 import { withRouter } from 'react-router-dom';
+import { toastr } from 'react-redux-toastr';
+import CSVParse from 'csv-parse';
+import moment from 'moment';
 
 // Import components
 import ImageUploader from './../ImageUploader';
 import MenuEditModal from './../MenuEditModal';
 
 // Import Actions
-import { deleteMenu } from 'services/menu/menuActions';
+import { deleteMenu } from '../../../../../../../../services/menu/menuActions';
 import {
   addItem,
-  deleteItem,
   addItems,
+  deleteItem,
+  addItems1,
   updateItem
-} from 'services/item/itemActions';
-import { getRestaurants } from 'services/restaurant/restaurantActions';
+} from '../../../../../../../../services/item/itemActions';
+import { getRestaurants } from '../../../../../../../../services/restaurant/restaurantActions';
 
 // Import Settings
-import settings from 'config/settings';
+import settings from '../../../../../../../../config/settings';
 import queryString from 'query-string';
 
 const imageUploaderStyle = {
@@ -56,6 +60,9 @@ class MenuTable extends React.Component {
     this.addMenuItemInput = this.addMenuItemInput.bind(this);
     this.handleUpdateMenuItem = this.handleUpdateMenuItem.bind(this);
     this.toggle = this.toggle.bind(this);
+    this.onClickAddItemFromExcel = this.onClickAddItemFromExcel.bind(this);
+    this.onChangeCSVFile = this.onChangeCSVFile.bind(this);
+    this.onExportCSV = this.onExportCSV.bind(this);
   }
 
   componentDidMount() {
@@ -167,6 +174,108 @@ class MenuTable extends React.Component {
     });
   }
 
+  onClickAddItemFromExcel(menu_id) {
+    localStorage.setItem("current_menu_id", menu_id);
+    this.csvUploader.click();
+  }
+
+  onChangeCSVFile(event) {
+    let file = event.target.files[0];
+    if(file === undefined){
+      return;
+    }
+    console.log(file);
+    const filename = file.name;
+    if(filename.substr(filename.length - 4, 4) !== ".csv"){
+      toastr.warning('Warning', "Please select .csv file");
+      return;
+    }
+    const fileReader = new FileReader();
+    const output = [];
+    fileReader.onload = () => {
+      const params = queryString.parse(this.props.location.search);
+      CSVParse(fileReader.result, {})
+        .on('readable', function() {
+          let record;
+          while ((record = this.read())) {
+            let item = {};
+            if(record[6] === 'i'){
+              item['created_at'] = moment().format('YYYY-MM-DD HH:mm:ss');
+              item['updated_at'] = moment().format('YYYY-MM-DD HH:mm:ss');
+              item['id'] = record[0];
+              item['name'] = record[1];
+              item['order'] = record[2];
+              item['image_url'] = record[3];
+              item['menu_id'] = localStorage.getItem("current_menu_id");
+              item['price'] = parseFloat(record[5]) * settings.INTEGER_PRECISION;
+              item['action'] = record[6];
+              output.push(item);
+            }
+          }
+        })
+        .on('end', () => {
+          console.log(output);
+          if(output.length === 0){
+            toastr.warning('Warning', "No operations in file");
+            return;
+          } else{
+            this.props.itemActions.addItems(output, params);
+          }
+        });
+    };
+    fileReader.readAsText(file, "UTF-8");
+  }
+
+  downloadCSV(csv, filename) {
+      var csvFile;
+      var downloadLink;
+      // CSV file
+      csvFile = new Blob(["\ufeff"+csv], {type: "text/csv;charset=UTF-8"});
+      // Download link
+      downloadLink = document.createElement("a");
+      // File name
+      downloadLink.download = filename;
+      // Create a link to the file
+      downloadLink.href = window.URL.createObjectURL(csvFile);
+      // Hide download link
+      downloadLink.style.display = "none";
+      // Add the link to DOM
+      document.body.appendChild(downloadLink);
+      // Click download link
+      downloadLink.click();
+  }
+
+  exportTableToCSV(filename, menu_id) {
+      var csv = [];
+      csv.push(['Item_Id', 'Name', 'Order', 'Image Url', 'Menu_Id', 'Price', 'Act(i)'].join(','));
+      var rows = document.querySelectorAll(".items_menu_" + menu_id);
+      for (var i = 0; i < rows.length; i++) {
+          var row = [], cols = rows[i].querySelectorAll(".item");
+          row.push(cols[0].attributes[1].value); // Item_Id
+          row.push(cols[0].innerText); // Name
+          row.push(cols[0].attributes[2].value); // Order
+          if(cols[0].attributes[3]){
+            row.push(cols[0].attributes[3].value); // Image Url
+          } else{
+            row.push("");
+          }
+          row.push(menu_id); // Menu_Id
+          row.push(cols[1].innerText); // Price
+          row.push(""); // Operation
+          csv.push(row.join(","));
+      }
+      // Download CSV file
+      this.downloadCSV(csv.join("\n"), filename);
+  }
+
+  onExportCSV(menu_id){
+    let self = this;
+    setTimeout(function(){
+      const filename = "Items_Menu_" + menu_id + ".csv"; 
+      self.exportTableToCSV(filename, menu_id);
+    }, 500);
+  }
+
   renderMenuItems(item) {
     /// If edit data of this item is empty/undefined just initialize with {} object
     if (!this.editData[item.menu_id]) {
@@ -181,10 +290,10 @@ class MenuTable extends React.Component {
     ////////////////////////////////////////////////////////////////////////////
 
     return (
-      <div className="p-3 border-bottom" key={item.id}>
+      <div className={"p-3 border-bottom items_menu_"+item.menu_id} key={item.id}>
         <div className="row">
-          <div className="col-md-4">{item.name}</div>
-          <div className="col-md-4">
+          <div className="col-md-4 item" data_id={item.id} data_order={item.order} data_image_url={item.image_url}>{item.name}</div>
+          <div className="col-md-4 item">
             {item.price / settings.INTEGER_PRECISION}
           </div>
           <div className="col-md-4">
@@ -282,7 +391,10 @@ class MenuTable extends React.Component {
       order: 1,
       menu_id: menuId
     };
-
+    
+    if (this.submitData[menuId].length == 1){
+      return;
+    }
     this.submitData[menuId].push(defaultItem);
     this.forceUpdate();
   }
@@ -345,14 +457,24 @@ class MenuTable extends React.Component {
 
   renderMenuTable() {
     const { data } = this.props;
-
     if (data && data.length > 0) {
+      data.sort(function(a, b){
+          var keyA = a.id,
+              keyB = b.id;
+          // Compare the 2 keys
+          if(keyA < keyB) return -1;
+          if(keyA > keyB) return 1;
+          return 0;
+      });
+      
       return data.map((menu, index) => (
         <React.Fragment key={index}>
-          <tr id={`toggle_menu_${index}`} key={menu.id}>
-            <th scope="row"> {index + 1} </th>
+          <tr id={`toggle_menu_${index}`} className="menu-toggle" key={menu.id}>
+            <th scope="row" data_id={menu.id} data_image_url={menu.image_url}> 
+              {index + 1} &nbsp;&nbsp;&nbsp;<span className="table-view-card-id"> {menu.id} </span>  
+            </th>
             <th>{menu.name}</th>
-            <th>{menu.restaurant.name}</th>
+            <th restaurant_id={menu.restaurant.id}>{menu.restaurant.name}</th>
             <th>{menu.order}</th>
             <th>
               <Button
@@ -396,6 +518,26 @@ class MenuTable extends React.Component {
                 >
                   <i className="fa fa-check"> Submit</i>
                 </Button>
+                <input
+                  type="file"
+                  style={{ display: 'none' }}
+                  onChange={this.onChangeCSVFile}
+                  onClick={(e) => e.target.value = null}
+                  ref={ref => {
+                    this.csvUploader = ref;
+                  }}
+                />
+                <Button color="default" onClick={()=>{this.onClickAddItemFromExcel(menu.id);}}>
+                  &nbsp;Add from CSV
+                </Button>
+                <Button 
+                  color="default" 
+                  onClick={()=>{
+                    this.onExportCSV(menu.id);
+                  }}
+                >
+                  &nbsp;Export csv
+                </Button>
                 {this.renderSubmitItems(menu)}
                 <div className="w-100 border-bottom" />
                 {menu.items.map(item => this.renderMenuItems(item))}
@@ -431,7 +573,7 @@ class MenuTable extends React.Component {
           <Table striped bordered responsive>
             <thead>
               <tr>
-                <th>#</th>
+                <th># &nbsp;&nbsp;&nbsp;<span className="table-view-card-id"> (id) </span> </th>
                 <th>Name</th>
                 <th>Restaurant</th>
                 <th>Order</th>
@@ -465,7 +607,7 @@ export default connect(
   }),
   dispatch => ({
     itemActions: bindActionCreators(
-      { addItem, deleteItem, addItems, updateItem },
+      { addItem, deleteItem, addItems, updateItem, addItems1 },
       dispatch
     ),
     menuActions: bindActionCreators({ deleteMenu }, dispatch),

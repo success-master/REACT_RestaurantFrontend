@@ -17,6 +17,14 @@ const addMenu = wrapRequest(async menu => {
   });
 });
 
+const addMenus = wrapRequest(async data =>
+  xapi().post('/api/menus/insertmany', { data })
+);
+
+const addMenusItems = wrapRequest(async data =>
+  xapi().post('/api/menus/insert_menus_items', { data })
+);
+
 const deleteMenu = wrapRequest(async id => xapi().delete(`/api/menus/${id}`));
 
 const updateMenu = wrapRequest(async (id, menu) => {
@@ -33,4 +41,4 @@ const updateMenu = wrapRequest(async (id, menu) => {
 
 const getMenuWithId = wrapRequest(async id => xapi().get(`/api/menus/${id}`));
 
-export { getMenus, addMenu, deleteMenu, updateMenu, getMenuWithId };
+export { getMenus, addMenu, addMenus, addMenusItems, deleteMenu, updateMenu, getMenuWithId };

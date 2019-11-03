@@ -7,6 +7,7 @@ const getItems = wrapRequest(async params =>
 );
 
 const addItem = wrapRequest(async item => {
+  console.log('add submit working');
   let file = null;
   if (item.file) {
     file = await getBase64(item.file);
@@ -17,6 +18,10 @@ const addItem = wrapRequest(async item => {
     file
   });
 });
+
+const addItems1 = wrapRequest(async data =>
+  xapi().post('/api/items/insertmany', { data })
+);
 
 const deleteItem = wrapRequest(async id => xapi().delete(`/api/items/${id}`));
 
@@ -34,4 +39,4 @@ const updateItem = wrapRequest(async (id, item) => {
 
 const getItem = wrapRequest(async id => xapi().get(`/api/items/${id}`));
 
-export { getItems, addItem, deleteItem, updateItem, getItem };
+export { getItems, addItem, deleteItem, updateItem, getItem, addItems1 };

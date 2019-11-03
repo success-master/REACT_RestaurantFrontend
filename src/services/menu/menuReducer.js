@@ -13,6 +13,12 @@ import {
   addMenu,
   addMenuSucceed,
   addMenuFailed,
+  addMenus,
+  addMenusSucceed,
+  addMenusFailed,
+  addMenusItems,
+  addMenusItemsSucceed,
+  addMenusItemsFailed,
   getMenu,
   getMenuSucceed,
   getMenuFailed,
@@ -75,6 +81,64 @@ const reducer = handleActions({
       success: false,
       error
     }
+  },
+  [addMenus](state) {
+    return {
+      ...state,
+      loading: true,
+      success: false,
+      message: 'Adding Menus...'
+    };
+  },
+  [addMenusSucceed](state) {
+    return {
+      ...state,
+      loading: false,
+      success: true,
+      message: 'Menus updated successfully'
+    };
+  },
+  [addMenusFailed](
+    state,
+    {
+      payload: { error }
+    }
+  ) {
+    return {
+      ...state,
+      loading: false,
+      error,
+      success: false
+    };
+  },
+  [addMenusItems](state) {
+    return {
+      ...state,
+      loading: true,
+      success: false,
+      message: 'Adding Menus and Items...'
+    };
+  },
+  [addMenusItemsSucceed](state) {
+    return {
+      ...state,
+      loading: false,
+      success: true,
+      message: 'Menus and Items updated successfully'
+    };
+  },
+  [addMenusItemsFailed](
+    state,
+    {
+      payload: { error }
+    }
+  ) {
+    return {
+      ...state,
+      loading: false,
+      error,
+      success: false
+    };
   },
   [deleteMenu](state) {
     return {

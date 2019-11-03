@@ -18,6 +18,10 @@ const addRestaurant = wrapRequest(async restaurant => {
   });
 });
 
+const addRestaurants = wrapRequest(async data =>
+  xapi().post('/api/restaurants/insertmany', { data })
+);
+
 const deleteRestaurant = wrapRequest(async id =>
   xapi().delete(`/api/restaurants/${id}`)
 );
@@ -40,6 +44,7 @@ const getRestaurant = wrapRequest(async id =>
 export {
   getRestaurants,
   addRestaurant,
+  addRestaurants,
   deleteRestaurant,
   updateRestaurant,
   getRestaurant

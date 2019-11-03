@@ -23,6 +23,25 @@ a {
   font-size: 1.70rem;
 }
 
+.tile-view-card-id {
+  text-shadow: #eee 0 0 1px, #eee 0 0 1px, #eee 0 0 1px,
+                #eee 0 0 1px, #eee 0 0 1px, #eee 0 0 1px;
+  -webkit-font-smoothing: antialiased;
+  color: #decad9;
+  font-size: 1.8rem;
+  position: absolute;
+  bottom: 0px;
+  left: 50%;
+}
+
+.table-view-card-id {
+  text-shadow: #eee 0 0 1px, #eee 0 0 1px, #eee 0 0 1px,
+                #eee 0 0 1px, #eee 0 0 1px, #eee 0 0 1px;
+  -webkit-font-smoothing: antialiased;
+  color: #ca9dbe;
+  font-size: 1.4rem;
+}
+
 .city-image-tile {
   filter: grayscale(100%);
 }

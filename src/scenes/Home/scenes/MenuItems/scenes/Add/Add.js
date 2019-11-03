@@ -7,17 +7,17 @@ import Swal from 'sweetalert2';
 // Import Components
 import { Button, Form, FormGroup, Label, Input } from 'reactstrap';
 
-import { ImageUploader } from 'components';
+import { ImageUploader } from '../../../../../../components';
 
 // Import Actions
-import { addItem } from 'services/item/itemActions';
-import { getMenus } from 'services/menu/menuActions';
+import { addItem } from '../../../../../../services/item/itemActions';
+import { getMenus } from '../../../../../../services/menu/menuActions';
 
 // Import Utility functions
-import { errorMsg } from 'services/utils';
+import { errorMsg } from '../../../../../../services/utils';
 
 // Import settings
-import settings from 'config/settings';
+import settings from '../../../../../../config/settings';
 
 class Add extends React.Component {
   constructor(props) {

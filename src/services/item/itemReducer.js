@@ -7,19 +7,28 @@ import {
   deleteItem,
   deleteItemSucceed,
   deleteItemFailed,
+  deleteItem1,
+  deleteItem1Succeed,
+  deleteItem1Failed,
   updateItem,
   updateItemSucceed,
   updateItemFailed,
   addItem,
   addItemSucceed,
   addItemFailed,
+  addItem1,
+  addItem1Succeed,
+  addItem1Failed,
   getItem,
   getItemSucceed,
   getItemFailed,
   updateCurrentItem,
   addItems,
   addItemsSucceed,
-  addItemsFailed
+  addItemsFailed,
+  addItems1,
+  addItems1Succeed,
+  addItems1Failed
 } from './itemActions';
 
 const defaultState = {
@@ -95,6 +104,36 @@ const reducer = handleActions(
         error
       };
     },
+    [addItem1](state) {
+      return {
+        ...state,
+        loading: true,
+        success: false,
+        message: 'Adding item...',
+        error: null
+      };
+    },
+    [addItem1Succeed](state) {
+      return {
+        ...state,
+        loading: false,
+        success: true,
+        message: 'Items updated successfully'
+      };
+    },
+    [addItem1Failed](
+      state,
+      {
+        payload: { error }
+      }
+    ) {
+      return {
+        ...state,
+        loading: false,
+        success: false,
+        error
+      };
+    },
     [addItems](state) {
       return {
         ...state,
@@ -113,6 +152,36 @@ const reducer = handleActions(
       };
     },
     [addItemsFailed](
+      state,
+      {
+        payload: { error }
+      }
+    ) {
+      return {
+        ...state,
+        loading: false,
+        success: false,
+        error
+      };
+    },
+    [addItems1](state) {
+      return {
+        ...state,
+        loading: true,
+        success: false,
+        message: 'Updaing items...',
+        error: null
+      };
+    },
+    [addItems1Succeed](state) {
+      return {
+        ...state,
+        loading: false,
+        success: true,
+        message: 'Items updated successfully'
+      };
+    },
+    [addItems1Failed](
       state,
       {
         payload: { error }
@@ -148,6 +217,41 @@ const reducer = handleActions(
       };
     },
     [deleteItemFailed](
+      state,
+      {
+        payload: { error }
+      }
+    ) {
+      return {
+        ...state,
+        loading: false,
+        success: false,
+        error
+      };
+    },
+    [deleteItem1](
+      state,
+      {
+        payload: { id }
+      }
+    ) {
+      return {
+        ...state,
+        loading: true,
+        success: false,
+        message: 'Deleting item...',
+        error: null
+      };
+    },
+    [deleteItem1Succeed](state) {
+      return {
+        ...state,
+        loading: false,
+        success: true,
+        message: 'Item deleted successfully'
+      };
+    },
+    [deleteItem1Failed](
       state,
       {
         payload: { error }

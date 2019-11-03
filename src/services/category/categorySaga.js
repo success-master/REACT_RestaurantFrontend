@@ -6,6 +6,8 @@ import {
   getCategoriesSucceed,
   addCategoryFailed,
   addCategorySucceed,
+  addCategoriesSucceed,
+  addCategoriesFailed,
   deleteCategoryFailed,
   deleteCategorySucceed,
   getCategories as getCategoriesAction,
@@ -24,6 +26,7 @@ export function* categorySubscriber() {
   yield all([takeEvery('DELETE_CATEGORY', deleteCategory)]);
   yield all([takeEvery('UPDATE_CATEGORY', updateCategory)]);
   yield all([takeEvery('GET_CATEGORY', getCategory)]);
+  yield all([takeEvery('ADD_CATEGORIES', addCategories)]);
 }
 
 export function* getCategories({ payload: { params } }) {
@@ -47,11 +50,22 @@ export function* addCategory({ payload: { category, params } }) {
   }
 }
 
+export function* addCategories({ payload: { data, params } }) {
+  try {
+    yield call(categoryApi.addCategories, data);
+    yield put(addCategoriesSucceed());
+    yield put(getCategoriesAction(params));
+  } catch (error) {
+    console.error(error);
+    yield put(addCategoriesFailed(error));
+  }
+}
+
 export function* deleteCategory({ payload: { id } }) {
   try {
     yield call(categoryApi.deleteCategory, id);
     yield put(deleteCategorySucceed());
-    yield put(getCategoriesAction({ page: 1 }));
+    yield put(getCategoriesAction());
   } catch (error) {
     console.error(error);
     yield put(deleteCategoryFailed(error));

@@ -6,6 +6,10 @@ import {
   getMenuFailed,
   addMenuSucceed,
   addMenuFailed,
+  addMenusSucceed,
+  addMenusFailed,
+  addMenusItemsSucceed,
+  addMenusItemsFailed,
   deleteMenuSucceed,
   deleteMenuFailed,
   getMenus as getMenusAction,
@@ -21,6 +25,8 @@ import * as menuApi from './menuApi';
 export function* menuSubscriber() {
   yield all([takeEvery('GET_MENUS', getMenus)]);
   yield all([takeEvery('ADD_MENU', addMenu)]);
+  yield all([takeEvery('ADD_MENUS', addMenus)]);
+  yield all([takeEvery('ADD_MENUS_ITEMS', addMenusItems)]);
   yield all([takeEvery('DELETE_MENU', deleteMenu)]);
   yield all([takeEvery('UPDATE_MENU', updateMenu)]);
   yield all([takeEvery('GET_MENU', getMenu)]);
@@ -44,6 +50,28 @@ export function* addMenu({ payload: { menu, params } }) {
   } catch (error) {
     console.error(error);
     yield put(addMenuFailed(error));
+  }
+}
+
+export function* addMenus({ payload: { data, params } }) {
+  try {
+    yield call(menuApi.addMenus, data);
+    yield put(addMenusSucceed());
+    yield put(getMenusAction(params));
+  } catch (error) {
+    console.error(error);
+    yield put(addMenusFailed(error));
+  }
+}
+
+export function* addMenusItems({ payload: { data, params } }) {
+  try {
+    yield call(menuApi.addMenusItems, data);
+    yield put(addMenusItemsSucceed());
+    yield put(getMenusAction(params));
+  } catch (error) {
+    console.error(error);
+    yield put(addMenusItemsFailed(error));
   }
 }
 

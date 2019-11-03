@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 
 /** Import components */
@@ -13,11 +12,18 @@ import {
   DropdownItem
 } from 'reactstrap';
 
+// Import actions
+import { logout } from '../../../../services/auth/authActions';
+import { bindActionCreators } from 'redux';
+
 /** Import assets */
-import logo from 'assets/images/logo.jpg';
+import logo from '../../../../assets/images/logo.jpg';
 import './topNav.css';
 
 class TopNav extends React.Component {
+  handleLogoutClick(e) {
+    this.props.authActions.logout();
+  }
   render() {
     const { name } = this.props.currentUser;
     return (
@@ -34,7 +40,7 @@ class TopNav extends React.Component {
 
               <DropdownMenu right>
                 <DropdownItem>
-                  <Link to="/logout">Log out</Link>
+                  <li onClick={(e)=>this.handleLogoutClick(e)}>Log out</li>
                 </DropdownItem>
               </DropdownMenu>
             </UncontrolledDropdown>
@@ -49,5 +55,7 @@ export default connect(
   state => ({
     currentUser: state.default.services.auth.currentUser
   }),
-  null
+  dispatch => ({
+    authActions: bindActionCreators({ logout }, dispatch)
+  })
 )(TopNav);

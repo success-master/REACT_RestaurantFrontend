@@ -6,8 +6,8 @@ import Swal from 'sweetalert2';
 import { withRouter } from 'react-router-dom';
 
 // Import Actions
-import { deleteItem } from 'services/item/itemActions';
-import settings from 'config/settings';
+import { deleteItem1 } from '../../../../../../../../services/item/itemActions';
+import settings from '../../../../../../../../config/settings';
 
 class MenuItemTable extends React.Component {
   constructor(props) {
@@ -33,7 +33,7 @@ class MenuItemTable extends React.Component {
       confirmButtonText: 'Yes, delete it!'
     }).then(result => {
       if (result.value) {
-        this.props.itemActions.deleteItem(id);
+        this.props.itemActions.deleteItem1(id);
       }
     });
   }
@@ -43,10 +43,10 @@ class MenuItemTable extends React.Component {
     if (data && data.length > 0) {
       return data.map((item, index) => (
         <tr key={item.id}>
-          <th scope="row"> {index + 1} </th>
+          <th scope="row" data_id={item.id} data_image_url={item.image_url}> {index + 1} </th>
           <th>{item.name}</th>
           <th>{item.price / settings.INTEGER_PRECISION}</th>
-          <th>{item.menu.name}</th>
+          <th data_menu_id={item.menu.id}>{item.menu.name}</th>
           <th>{item.order}</th>
           <th>
             <Button
@@ -97,6 +97,6 @@ class MenuItemTable extends React.Component {
 export default connect(
   null,
   dispatch => ({
-    itemActions: bindActionCreators({ deleteItem }, dispatch)
+    itemActions: bindActionCreators({ deleteItem1 }, dispatch)
   })
 )(withRouter(MenuItemTable));

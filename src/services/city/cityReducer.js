@@ -104,7 +104,7 @@ const reducer = handleActions(
         ...state,
         loading: false,
         success: true,
-        message: 'Cities added successfully'
+        message: 'Cities updated successfully'
       };
     },
     [addCitiesFailed](

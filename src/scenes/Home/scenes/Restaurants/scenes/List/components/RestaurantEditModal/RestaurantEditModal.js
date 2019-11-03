@@ -12,17 +12,17 @@ import {
   Input,
   Button
 } from 'reactstrap';
-import { ImageUploader } from 'components';
-import settings from 'config/settings';
+import { ImageUploader } from '../../../../../../../../components';
+import settings from '../../../../../../../../config/settings';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { withRouter } from 'react-router-dom';
-import { updateRestaurant } from 'services/restaurant/restaurantActions';
+import { updateRestaurant } from '../../../../../../../../services/restaurant/restaurantActions';
 import queryString from 'query-string';
 
 // Import Actions
-import { getCategories } from 'services/category/categoryActions';
-import { updateRestaurant } from 'services/restaurant/restaurantActions';
+import { getCategories } from '../../../../../../../../services/category/categoryActions';
+import { updateRestaurant } from '../../../../../../../../services/restaurant/restaurantActions';
 
 const imageUploaderStyle = {
   position: 'relative',
